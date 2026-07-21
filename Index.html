@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard OKR & KPI · EZYTEC · A&F</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --ez-green:#00A878;--ez-green-dk:#007D5A;--ez-green-lt:#E6F7F2;
+    --ez-blue:#1A4B8C;--ez-blue-mid:#2563B0;--ez-blue-lt:#E8EFF9;
+    --ez-navy:#0F2D5C;--ez-bg:#F2F5FA;--ez-border:#D8E0EE;
+    --ez-text:#1A2340;--ez-muted:#5A6480;--ez-red:#C0392B;
+    --ez-amber:#D97706;--ez-amber-lt:#FFF7ED;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:Arial,sans-serif;background:var(--ez-bg);color:var(--ez-text);font-size:14px;line-height:1.5;}
+  .topbar{background:var(--ez-navy);display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:60px;}
+  .logo-area{display:flex;align-items:center;gap:11px;}
+  .logo-box{width:38px;height:38px;border-radius:8px;background:var(--ez-green);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#fff;letter-spacing:.5px;}
+  .brand{color:#fff;font-size:16px;font-weight:700;letter-spacing:1px;}
+  .brand em{color:var(--ez-green);font-style:normal;}
+  .topbar-right{display:flex;align-items:center;gap:14px;}
+  .period-badge{font-size:11px;color:rgba(255,255,255,.5);background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px;}
+  .dl-btn{background:var(--ez-green);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;}
+  .dl-btn:hover{background:var(--ez-green-dk);}
+  .hero{background:linear-gradient(135deg,var(--ez-navy) 0%,var(--ez-blue) 100%);padding:24px 28px 22px;}
+  .hero-title{font-size:20px;font-weight:700;color:#fff;margin-bottom:3px;}
+  .hero-sub{font-size:12px;color:rgba(255,255,255,.55);margin-bottom:18px;}
+  .kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+  .kpi-card{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);border-radius:10px;padding:13px 12px;text-align:center;cursor:pointer;transition:background .2s,transform .15s;}
+  .kpi-card:hover{background:rgba(255,255,255,.18);transform:translateY(-2px);}
+  .kpi-lbl{font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+  .kpi-val{font-size:20px;font-weight:700;color:#fff;}
+  .kpi-sub{font-size:10px;color:rgba(255,255,255,.45);margin-top:3px;}
+  .tab-bar{background:#fff;border-bottom:1px solid var(--ez-border);padding:0 28px;display:flex;overflow-x:auto;}
+  .tab{padding:13px 18px;font-size:12px;font-weight:700;color:var(--ez-muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;}
+  .tab:hover{color:var(--ez-blue);}
+  .tab.active{color:var(--ez-blue);border-bottom-color:var(--ez-green);}
+  .main{padding:20px 28px 32px;}
+  .section{display:none;}
+  .section.active{display:block;}
+  .sec-head{margin-bottom:16px;}
+  .sec-head h2{font-size:16px;font-weight:700;color:var(--ez-navy);margin-bottom:3px;}
+  .sec-head p{font-size:12px;color:var(--ez-muted);}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+  .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
+  .full{margin-bottom:14px;}
+  .card{background:#fff;border-radius:12px;border:1px solid var(--ez-border);padding:18px;}
+  .card-ttl{font-size:11px;font-weight:700;color:var(--ez-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+  .pill{width:8px;height:8px;border-radius:50%;background:var(--ez-green);flex-shrink:0;}
+  .pill-b{background:var(--ez-blue-mid);}
+  .pill-r{background:var(--ez-red);}
+  .mcard{background:#fff;border-radius:10px;border:1px solid var(--ez-border);padding:15px 14px;cursor:pointer;transition:box-shadow .2s,transform .15s;}
+  .mcard:hover{box-shadow:0 4px 16px rgba(26,75,140,.13);transform:translateY(-2px);}
+  .mc-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--ez-muted);margin-bottom:6px;}
+  .mc-val{font-size:24px;font-weight:700;color:var(--ez-blue);}
+  .mc-sub{font-size:11px;color:var(--ez-muted);margin-top:3px;}
+  .mc-green .mc-val{color:var(--ez-green-dk);}
+  .mc-red .mc-val{color:var(--ez-red);}
+  .mc-amber .mc-val{color:var(--ez-amber);}
+  .ch{position:relative;width:100%;}
+  .clickable-chart{cursor:pointer;}
+  .clickable-chart:hover{opacity:.9;}
+  .leg{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px;}
+  .li{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ez-muted);}
+  .lsq{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+  .insight{border-radius:8px;padding:12px 14px;font-size:12px;line-height:1.65;border-left:4px solid;margin-bottom:10px;}
+  .i-green{background:var(--ez-green-lt);border-color:var(--ez-green);color:#065F46;}
+  .i-blue{background:var(--ez-blue-lt);border-color:var(--ez-blue-mid);color:var(--ez-navy);}
+  .i-warn{background:var(--ez-amber-lt);border-color:var(--ez-amber);color:#7C4A00;}
+  .i-red{background:#FEF2F2;border-color:var(--ez-red);color:#7F1D1D;}
+  .insight b{font-weight:700;}
+  .tbl-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{background:var(--ez-blue-lt);color:var(--ez-blue);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:9px 12px;text-align:left;}
+  td{padding:9px 12px;border-bottom:1px solid var(--ez-border);}
+  tr:last-child td{border-bottom:none;}
+  tr.crow{cursor:pointer;}
+  tr.crow:hover td{background:var(--ez-blue-lt);}
+  .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+  .tag-ok{background:var(--ez-green-lt);color:var(--ez-green-dk);}
+  .tag-warn{background:var(--ez-amber-lt);color:#854F0B;}
+  .tag-bad{background:#FEF2F2;color:var(--ez-red);}
+  .num-good{color:var(--ez-green-dk);font-weight:700;}
+  .num-bad{color:var(--ez-red);font-weight:700;}
+  .gauges{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px;}
+  .gauge-card{background:#fff;border:1px solid var(--ez-border);border-radius:10px;padding:16px 14px;display:flex;flex-direction:column;gap:8px;cursor:pointer;transition:box-shadow .2s;}
+  .gauge-card:hover{box-shadow:0 4px 16px rgba(26,75,140,.13);}
+  .gauge-lbl{font-size:11px;font-weight:700;color:var(--ez-muted);text-transform:uppercase;letter-spacing:.4px;}
+  .gauge-track{height:10px;background:#E5E9F2;border-radius:10px;overflow:hidden;}
+  .gauge-fill{height:100%;border-radius:10px;}
+  .gauge-row{display:flex;justify-content:space-between;align-items:center;}
+  .gauge-pct{font-size:18px;font-weight:700;}
+  .footer{background:var(--ez-navy);color:rgba(255,255,255,.35);font-size:11px;text-align:center;padding:13px 28px;margin-top:8px;}
+  .footer span{color:var(--ez-green);font-weight:700;}
+  /* MODAL */
+  .mo{display:none;position:fixed;inset:0;background:rgba(15,45,92,.55);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+  .mo.open{display:flex;}
+  .mb{background:#fff;border-radius:16px;padding:28px 28px 24px;max-width:580px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(15,45,92,.25);animation:popIn .2s ease;}
+  @keyframes popIn{from{opacity:0;transform:scale(.94) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
+  .mh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;}
+  .mt{font-size:15px;font-weight:700;color:var(--ez-navy);line-height:1.3;}
+  .mc{background:var(--ez-bg);border:none;border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer;color:var(--ez-muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:12px;}
+  .mc:hover{background:var(--ez-border);}
+  .ms{margin-bottom:16px;}
+  .mst{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--ez-muted);margin-bottom:8px;border-bottom:1px solid var(--ez-border);padding-bottom:5px;}
+  .mg{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .mk{background:var(--ez-bg);border-radius:8px;padding:11px 13px;}
+  .mkl{font-size:10px;color:var(--ez-muted);margin-bottom:4px;}
+  .mkv{font-size:18px;font-weight:700;color:var(--ez-blue);}
+  .mkv.good{color:var(--ez-green-dk);}
+  .mkv.bad{color:var(--ez-red);}
+  .mkv.warn{color:var(--ez-amber);}
+  .mr{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--ez-border);font-size:12px;}
+  .mr:last-child{border-bottom:none;}
+  .mrl{color:var(--ez-muted);}
+  .mrv{font-weight:700;color:var(--ez-text);}
+  .mrv.good{color:var(--ez-green-dk);}
+  .mrv.bad{color:var(--ez-red);}
+  .mrv.warn{color:var(--ez-amber);}
+  .mnote{font-size:11px;color:var(--ez-muted);line-height:1.6;background:var(--ez-blue-lt);border-radius:6px;padding:9px 12px;margin-top:12px;}
+  .btrack{height:8px;background:#E5E9F2;border-radius:6px;overflow:hidden;margin:3px 0 8px;}
+  .bfill{height:100%;border-radius:6px;}
+  @media print{.topbar,.tab-bar,.dl-btn,.mo{display:none!important;}.section{display:block!important;page-break-before:always;}.section:first-child{page-break-before:auto;}body{background:#fff;}}
+
+  /* ── TABLET (≤900px) ── */
+  @media(max-width:900px){
+    .kpi-strip{grid-template-columns:repeat(3,1fr);}
+    .g4{grid-template-columns:repeat(2,1fr);}
+    .g3{grid-template-columns:1fr 1fr;}
+    .g2{grid-template-columns:1fr;}
+    .gauges{grid-template-columns:1fr;}
+    .mg{grid-template-columns:1fr 1fr;}
+  }
+
+  /* ── MOBILE (≤600px) ── */
+  @media(max-width:600px){
+    .topbar{padding:0 14px;height:52px;}
+    .brand{font-size:14px;}
+    .period-badge{display:none;}
+    .dl-btn{padding:6px 11px;font-size:11px;}
+    .hero{padding:16px 14px 16px;}
+    .hero-title{font-size:15px;}
+    .hero-sub{font-size:11px;margin-bottom:14px;}
+    .kpi-strip{grid-template-columns:repeat(2,1fr);gap:7px;}
+    .kpi-val{font-size:17px;}
+    .tab{padding:10px 12px;font-size:11px;}
+    .main{padding:12px 14px 24px;}
+    .g4{grid-template-columns:1fr 1fr;}
+    .g3{grid-template-columns:1fr;}
+    .g2{grid-template-columns:1fr;}
+    .gauges{grid-template-columns:1fr;}
+    .card{padding:13px;}
+    .mcard{padding:11px 12px;}
+    .mc-val{font-size:20px;}
+    .leg{gap:8px;}
+    .mb{padding:18px 16px 16px;max-height:92vh;}
+    .mg{grid-template-columns:1fr 1fr;}
+    .sec-head h2{font-size:14px;}
+    th,td{padding:7px 9px;font-size:11px;}
+  }
+
+  /* ── SMALL MOBILE (≤380px) ── */
+  @media(max-width:380px){
+    .kpi-strip{grid-template-columns:1fr 1fr;}
+    .g4{grid-template-columns:1fr;}
+    .mg{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo-area">
+    <div class="logo-box">EZY</div>
+    <div class="brand">EZY<em>TEC</em> /&gt;</div>
+  </div>
+  <div class="topbar-right">
+    <span class="period-badge">Enero – Junio 2026</span>
+    <button class="dl-btn" onclick="window.print()">&#8595; Exportar PDF</button>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-title">Dashboard de Indicadores OKR &amp; KPI — Aseguramiento y Finanzas</div>
+  <div class="hero-sub">Aseguramiento de Ingresos · Calidad · Información Financiera · Abastecimiento · Ene–Jun 2026</div>
+  <div class="kpi-strip">
+    <div class="kpi-card" onclick="openM('hero_negocios')">
+      <div class="kpi-lbl">Negocios cerrados</div><div class="kpi-val">26</div><div class="kpi-sub">Acum. Ene–Jun</div>
+    </div>
+    <div class="kpi-card" onclick="openM('hero_clientes')">
+      <div class="kpi-lbl">Clientes con contrato</div><div class="kpi-val">78</div><div class="kpi-sub">Junio</div>
+    </div>
+    <div class="kpi-card" onclick="openM('hero_cartera')">
+      <div class="kpi-lbl">Calidad de cartera</div><div class="kpi-val">98.5%</div><div class="kpi-sub">Promedio Ene–Jun</div>
+    </div>
+    <div class="kpi-card" onclick="openM('hero_cert')">
+      <div class="kpi-lbl">Cumpl. certificaciones</div><div class="kpi-val">100%</div><div class="kpi-sub">Constante todos los meses</div>
+    </div>
+    <div class="kpi-card" onclick="openM('hero_rq')">
+      <div class="kpi-lbl">RQ total gestionados</div><div class="kpi-val">92</div><div class="kpi-sub">6 con incumplimiento calidad</div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="showTab('ingresos',this)">Ingresos y Tesorería</div>
+  <div class="tab" onclick="showTab('calidad',this)">Aseg. de Calidad</div>
+  <div class="tab" onclick="showTab('fiscal',this)">Info. Financiera</div>
+  <div class="tab" onclick="showTab('abast',this)">Abastecimiento</div>
+</div>
+
+<div class="main">
+
+<!-- INGRESOS -->
+<div id="ingresos" class="section active">
+  <div class="sec-head"><h2>Aseguramiento de Ingresos y Tesorería</h2><p>Comportamiento mensual de los indicadores de venta, recaudo, cartera y liquidez — Enero a Junio 2026.</p></div>
+  <div class="g4">
+    <div class="mcard mc-green" onclick="openM('ing_negocios')"><div class="mc-lbl">Negocios cerrados acum.</div><div class="mc-val">26</div><div class="mc-sub">Pico: 8 en Mayo</div></div>
+    <div class="mcard" onclick="openM('ing_clientes')"><div class="mc-lbl">Clientes contrato vigente</div><div class="mc-val">78</div><div class="mc-sub">Junio</div></div>
+    <div class="mcard mc-amber" onclick="openM('ing_cartera')"><div class="mc-lbl">Calidad de cartera prom.</div><div class="mc-val">98.5%</div><div class="mc-sub">Mín. 97% en Junio</div></div>
+    <div class="mcard mc-amber" onclick="openM('ing_vencidos')"><div class="mc-lbl">Clientes contratos vencidos</div><div class="mc-val">14</div><div class="mc-sub">Junio · tendencia estable</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-ttl"><span class="pill"></span>Costo financiero demoras de proyectos ($)</div>
+      <div class="ch clickable-chart" style="height:210px" onclick="openM('ing_costos')"><canvas id="c1"></canvas></div>
+      <p style="font-size:11px;color:var(--ez-muted);margin-top:10px">&#9888; Marzo $53.9M — Junio $28.1M. Abril fue el único mes en $0. <b style="color:var(--ez-blue);cursor:pointer" onclick="openM('ing_costos')">Ver detalle →</b></p>
+    </div>
+    <div class="card">
+      <div class="card-ttl"><span class="pill pill-b"></span>Negocios cerrados por mes</div>
+      <div class="ch clickable-chart" style="height:210px" onclick="openM('ing_negocios')"><canvas id="c2"></canvas></div>
+      <p style="font-size:11px;color:var(--ez-muted);margin-top:10px">Mayo: 8 negocios (máx). Marzo: 2 (mín). <b style="color:var(--ez-blue);cursor:pointer" onclick="openM('ing_negocios')">Ver detalle →</b></p>
+    </div>
+  </div>
+  <div class="card full">
+    <div class="card-ttl"><span class="pill"></span>Indicadores de cumplimiento mensual (%)</div>
+    <div class="leg">
+      <span class="li"><span class="lsq" style="background:#1A4B8C"></span>% Cumpl. salidas facturables</span>
+      <span class="li"><span class="lsq" style="background:#00A878"></span>Efectividad de recaudo</span>
+      <span class="li"><span class="lsq" style="background:#D97706"></span>Calidad de cartera</span>
+      <span class="li"><span class="lsq" style="background:#2563B0"></span>% Cumpl. clientes vigentes</span>
+    </div>
+    <div class="ch clickable-chart" style="height:230px" onclick="openM('ing_cumpl')"><canvas id="c3"></canvas></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-ttl"><span class="pill pill-r"></span>GAP efectivo (días)</div>
+      <div class="ch clickable-chart" style="height:200px" onclick="openM('ing_gap')"><canvas id="c4"></canvas></div>
+      <p style="font-size:11px;color:var(--ez-muted);margin-top:10px">Mejora notable en Abril (27 días). Riesgo de liquidez si supera 60 días.</p>
+    </div>
+    <div class="card">
+      <div class="card-ttl"><span class="pill pill-b"></span>Días promedio pago vs. cobro</div>
+      <div class="leg"><span class="li"><span class="lsq" style="background:#1A4B8C"></span>Días pago</span><span class="li"><span class="lsq" style="background:#00A878"></span>Días cobro</span></div>
+      <div class="ch clickable-chart" style="height:185px" onclick="openM('ing_dias')"><canvas id="c5"></canvas></div>
+    </div>
+  </div>
+  <div class="card full">
+    <div class="card-ttl"><span class="pill pill-b"></span>Clientes con contrato vigente vs. contratos vencidos</div>
+    <div class="leg"><span class="li"><span class="lsq" style="background:#1A4B8C"></span>Total contratos activos</span><span class="li"><span class="lsq" style="background:#C0392B"></span>Contratos vencidos</span></div>
+    <div class="ch clickable-chart" style="height:200px" onclick="openM('ing_contratos')"><canvas id="c6"></canvas></div>
+    <p style="font-size:11px;color:var(--ez-muted);margin-top:10px">Los contratos vencidos crecen de 56 (Enero) a 65 (Mayo). Requiere gestión activa de renovación.</p>
+  </div>
+  <div class="insight i-warn"><b>Costo de demoras:</b> Junio reactiva el indicador con $28,1M — segundo mayor del período tras Marzo ($53,9M). Abril sigue siendo el único mes en $0.</div>
+  <div class="insight i-blue"><b>Contratos vencidos:</b> La proporción se mantiene en 18% en Junio (14 vencidos sobre 78 activos). Tendencia estable tras la mejora sostenida desde Enero.</div>
+  <div class="insight i-warn"><b>Calidad de cartera:</b> Junio registra 97% — el mínimo del período. Requiere seguimiento en la gestión de cobro.</div>
+</div>
+
+<!-- CALIDAD -->
+<div id="calidad" class="section">
+  <div class="sec-head"><h2>Aseguramiento de Calidad</h2><p>Cumplimiento de certificaciones y planes de mejoramiento — Enero a Junio 2026.</p></div>
+  <div class="gauges">
+    <div class="gauge-card" onclick="openM('cal_cert')">
+      <div class="gauge-lbl">% Cumplimiento certificaciones — promedio período</div>
+      <div class="gauge-row"><div class="gauge-pct" style="color:var(--ez-green-dk)">100%</div><span style="font-size:11px;color:var(--ez-muted)">Meta: 100%</span></div>
+      <div class="gauge-track"><div class="gauge-fill" style="width:100%;background:var(--ez-green)"></div></div>
+      <div style="font-size:11px;color:var(--ez-muted)">Constante Ene–Jun · <b style="color:var(--ez-blue)">Ver detalle →</b></div>
+    </div>
+    <div class="gauge-card" onclick="openM('cal_planes')">
+      <div class="gauge-lbl">% Cumplimiento planes de mejoramiento — promedio período</div>
+      <div class="gauge-row"><div class="gauge-pct" style="color:var(--ez-green-dk)">100%</div><span style="font-size:11px;color:var(--ez-muted)">Meta: 100%</span></div>
+      <div class="gauge-track"><div class="gauge-fill" style="width:100%;background:var(--ez-blue-mid)"></div></div>
+      <div style="font-size:11px;color:var(--ez-muted)">Constante Ene–Jun · <b style="color:var(--ez-blue)">Ver detalle →</b></div>
+    </div>
+  </div>
+  <div class="card full">
+    <div class="card-ttl"><span class="pill"></span>Evolución mensual indicadores de calidad (%)</div>
+    <div class="leg"><span class="li"><span class="lsq" style="background:#00A878"></span>Cumpl. certificaciones</span><span class="li"><span class="lsq" style="background:#1A4B8C"></span>Cumpl. planes de mejora</span></div>
+    <div class="ch clickable-chart" style="height:240px" onclick="openM('cal_cert')"><canvas id="c7"></canvas></div>
+  </div>
+  <div class="card full">
+    <div class="card-ttl"><span class="pill pill-b"></span>Detalle mensual</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Mes</th><th>% Cumpl. Certificaciones</th><th>% Cumpl. Planes de Mejora</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr class="crow" onclick="openM('cal_mes_0')"><td>Enero</td><td class="num-good">100%</td><td class="num-good">100%</td><td><span class="tag tag-ok">Cumple</span></td></tr>
+          <tr class="crow" onclick="openM('cal_mes_1')"><td>Febrero</td><td class="num-good">100%</td><td class="num-good">100%</td><td><span class="tag tag-ok">Cumple</span></td></tr>
+          <tr class="crow" onclick="openM('cal_mes_2')"><td>Marzo</td><td class="num-good">100%</td><td class="num-good">100%</td><td><span class="tag tag-ok">Cumple</span></td></tr>
+          <tr class="crow" onclick="openM('cal_mes_3')"><td>Abril</td><td class="num-good">100%</td><td class="num-good">100%</td><td><span class="tag tag-ok">Cumple</span></td></tr>
+          <tr class="crow" onclick="openM('cal_mes_4')"><td>Mayo</td><td class="num-good">100%</td><td class="num-good">100%</td><td><span class="tag tag-ok">Cumple</span></td></tr>
+          <tr class="crow" onclick="openM('cal_mes_5')"><td>Junio</td><td class="num-good">100%</td><td class="num-good">100%</td><td><span class="tag tag-ok">Cumple</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="insight i-green"><b>Desempeño óptimo:</b> Ambos indicadores mantienen 100% de cumplimiento durante los cinco meses. Gestión sólida y consistente.</div>
+</div>
+
+<!-- FISCAL -->
+<div id="fiscal" class="section">
+  <div class="sec-head"><h2>Información Financiera — Gestión Tributaria</h2><p>Cumplimiento de calendario tributario e impuestos gestionados — Enero a Junio 2026.</p></div>
+  <div class="g3">
+    <div class="mcard mc-green" onclick="openM('fis_cumpl')"><div class="mc-lbl">Cumpl. calendario tributario</div><div class="mc-val">100%</div><div class="mc-sub">Todos los meses sin excepción</div></div>
+    <div class="mcard" onclick="openM('fis_nac')"><div class="mc-lbl">Impuestos nacionales acum.</div><div class="mc-val">78</div><div class="mc-sub">Pico de 21 en Marzo</div></div>
+    <div class="mcard mc-green" onclick="openM('fis_int')"><div class="mc-lbl">Impuestos internacionales</div><div class="mc-val">12</div><div class="mc-sub">Constante: 2 por mes</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-ttl"><span class="pill pill-b"></span>Impuestos nacionales por mes</div>
+      <div class="ch clickable-chart" style="height:230px" onclick="openM('fis_nac')"><canvas id="c8"></canvas></div>
+      <p style="font-size:11px;color:var(--ez-muted);margin-top:10px">Marzo concentra el mayor volumen (21) por acumulación de vencimientos tributarios.</p>
+    </div>
+    <div class="card">
+      <div class="card-ttl"><span class="pill"></span>Impuestos internacionales por mes</div>
+      <div class="ch clickable-chart" style="height:230px" onclick="openM('fis_int')"><canvas id="c9"></canvas></div>
+      <p style="font-size:11px;color:var(--ez-muted);margin-top:10px">Volumen estable de 2 por mes — cumplimiento consistente en jurisdicciones internacionales.</p>
+    </div>
+  </div>
+  <div class="card full">
+    <div class="card-ttl"><span class="pill pill-b"></span>Tabla detallada por mes</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Mes</th><th>Cumpl. Calendario</th><th># Nac.</th><th># Int.</th><th>Total</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr class="crow" onclick="openM('fis_mes_0')"><td>Enero</td><td class="num-good">100%</td><td>8</td><td>2</td><td><b>10</b></td><td><span class="tag tag-ok">Al día</span></td></tr>
+          <tr class="crow" onclick="openM('fis_mes_1')"><td>Febrero</td><td class="num-good">100%</td><td>9</td><td>2</td><td><b>11</b></td><td><span class="tag tag-ok">Al día</span></td></tr>
+          <tr class="crow" onclick="openM('fis_mes_2')"><td>Marzo</td><td class="num-good">100%</td><td style="color:var(--ez-amber);font-weight:700">21</td><td>2</td><td><b>23</b></td><td><span class="tag tag-warn">Carga alta</span></td></tr>
+          <tr class="crow" onclick="openM('fis_mes_3')"><td>Abril</td><td class="num-good">100%</td><td>16</td><td>2</td><td><b>18</b></td><td><span class="tag tag-ok">Al día</span></td></tr>
+          <tr class="crow" onclick="openM('fis_mes_4')"><td>Mayo</td><td class="num-good">100%</td><td>11</td><td>2</td><td><b>13</b></td><td><span class="tag tag-ok">Al día</span></td></tr>
+          <tr class="crow" onclick="openM('fis_mes_5')"><td>Junio</td><td class="num-good">100%</td><td>13</td><td>2</td><td><b>15</b></td><td><span class="tag tag-ok">Al día</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="insight i-green"><b>Cumplimiento tributario perfecto:</b> 100% en todos los meses, nacionales e internacionales.</div>
+  <div class="insight i-warn"><b>Pico de Marzo:</b> 21 impuestos nacionales (2.6× el promedio). Requiere planificación anticipada de capacidad operativa.</div>
+</div>
+
+<!-- ABASTECIMIENTO -->
+<div id="abast" class="section">
+  <div class="sec-head"><h2>Abastecimiento — Gestión de RQ y Efectividad</h2><p>Calidad de especificaciones, cumplimiento de lead time y efectividad por proyecto — Enero a Junio 2026.</p></div>
+  <div class="g4">
+    <div class="mcard mc-green" onclick="openM('ab_rq')"><div class="mc-lbl">Total RQ gestionados</div><div class="mc-val">92</div><div class="mc-sub">Acum. Ene–Jun</div></div>
+    <div class="mcard mc-red" onclick="openM('ab_calidad')"><div class="mc-lbl">RQ incumpl. calidad</div><div class="mc-val">6</div><div class="mc-sub">6.5% del total</div></div>
+    <div class="mcard mc-amber" onclick="openM('ab_lead')"><div class="mc-lbl">RQ fuera lead time</div><div class="mc-val">48</div><div class="mc-sub">52% fuera de tiempo</div></div>
+    <div class="mcard" onclick="openM('ab_ef')"><div class="mc-lbl">Efectividad 1 / 2 prom.</div><div class="mc-val">69.7%</div><div class="mc-sub">Ef. 2 promedio: 82.3%</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-ttl"><span class="pill pill-b"></span>RQ totales vs. fuera de lead time</div>
+      <div class="leg"><span class="li"><span class="lsq" style="background:#1A4B8C"></span>Total RQ</span><span class="li"><span class="lsq" style="background:#C0392B"></span>Fuera lead time</span></div>
+      <div class="ch clickable-chart" style="height:210px" onclick="openM('ab_lead')"><canvas id="c10"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-ttl"><span class="pill"></span>Efectividad mensual (%)</div>
+      <div class="leg"><span class="li"><span class="lsq" style="background:#00A878"></span>Efectividad 1</span><span class="li"><span class="lsq" style="background:#1A4B8C"></span>Efectividad 2</span></div>
+      <div class="ch clickable-chart" style="height:210px" onclick="openM('ab_ef')"><canvas id="c11"></canvas></div>
+    </div>
+  </div>
+  <div class="card full">
+    <div class="card-ttl"><span class="pill"></span>% Cumplimiento lead time / calidad por mes</div>
+    <div class="ch clickable-chart" style="height:190px" onclick="openM('ab_cumpl')"><canvas id="c12"></canvas></div>
+    <p style="font-size:11px;color:var(--ez-muted);margin-top:10px">Febrero: 5.3% (mín). Abril: 75% (máx). Junio: 60% — recuperación tras Mayo (25.9%).</p>
+  </div>
+  <div class="card full">
+    <div class="card-ttl"><span class="pill pill-b"></span>Efectividad por proyecto (Ef.1 y Ef.2)</div>
+    <div class="leg"><span class="li"><span class="lsq" style="background:#00A878"></span>Efectividad 1</span><span class="li"><span class="lsq" style="background:#1A4B8C"></span>Efectividad 2</span></div>
+    <div class="ch clickable-chart" style="height:300px" onclick="openM('ab_proy_chart')"><canvas id="c13"></canvas></div>
+  </div>
+  <div class="card full">
+    <div class="card-ttl"><span class="pill pill-b"></span>Detalle de proyectos por mes</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Mes</th><th>Proyecto</th><th>RQ</th><th>Incumpl. Cal.</th><th>Fuera LT</th><th>% Cumpl.</th><th>Ef. 1</th><th>Ef. 2</th><th>Estado</th></tr></thead>
+        <tbody id="ptbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="insight i-warn"><b>Lead time:</b> 52% de los RQ acumulados fuera del lead time. Junio mejora notablemente (1/5 RQ, 20%) — mejor mes del período.</div>
+  <div class="insight i-blue"><b>Calidad de especificaciones:</b> 6 de 92 RQ (6.5%) con incumplimiento. Junio: Ideo Cali aporta 1 caso.</div>
+  <div class="insight i-green"><b>Efectividad Junio — Ideo Cali:</b> Ef.1 90% / Ef.2 100% — sólido desempeño en el único proyecto del mes.</div>
+</div>
+
+</div><!-- /main -->
+
+<div class="footer"><span>EZYTEC</span> · E Global Technology S.A.S. · Dashboard OKR &amp; KPI — Aseguramiento y Finanzas · Enero–Junio 2026</div>
+
+<!-- MODAL -->
+<div class="mo" id="moverlay" onclick="closeMOut(event)">
+  <div class="mb">
+    <div class="mh"><div class="mt" id="mtitle"></div><button class="mc" onclick="closeM()">✕</button></div>
+    <div id="mbody"></div>
+  </div>
+</div>
+
+<script>
+const M=['Enero','Febrero','Marzo','Abril','Mayo','Junio'];
+const B='#1A4B8C',G='#00A878',R='#C0392B',A='#D97706',B2='#2563B0';
+
+const D={
+  costos:[3396304,8953157,53881074,0,4912614,28117784],
+  neg:[4,7,2,4,8,1],
+  vig:[80,79,79,79,79,78],
+  vec:[56,57,64,64,65,64],
+  pctV:[70,72,81,81,83,82],
+  sal:[81.4,96.3,98.6,95.2,78.9,100],
+  cart:[99,99,99,98.9,99,97],
+  rec:[98,99,99,97,95,99],
+  gap:[65,65.6,55,27,43,41],
+  dpago:[118,120.8,108,112,75,77],
+  dcobro:[53,55,53,85,31,37],
+  impN:[8,9,21,16,11,13],
+  impI:[2,2,2,2,2,2],
+  rqT:[9,19,8,24,27,5],
+  rqC:[0,2,0,1,2,1],
+  rqL:[5,16,3,5,18,1],
+  cumpl:[44.4,5.3,62.5,75.0,25.9,60.0],
+  ef1:[69,36,94,100,64,95],
+  ef2:[86,49,94,100,86,79]
+};
+
+const PROY=[
+  {mes:'Enero',   n:'Plaza de las Américas',    rq:4, icq:0,flt:1, c:75.0, e1:51.7,e2:82.8},
+  {mes:'Enero',   n:'Unicentro Pasto',           rq:5, icq:0,flt:4, c:20.0, e1:86.2,e2:89.3},
+  {mes:'Febrero', n:'Unicentro Neiva',           rq:4, icq:1,flt:3, c:0.0,  e1:14.3,e2:28.6},
+  {mes:'Febrero', n:'Metrópolis',                rq:12,icq:1,flt:10,c:8.3,  e1:80.0,e2:84.5},
+  {mes:'Febrero', n:'Unicentro Medellín',        rq:3, icq:0,flt:3, c:0.0,  e1:12.5,e2:33.3},
+  {mes:'Marzo',   n:'Vergel Plaza',              rq:8, icq:0,flt:3, c:62.5, e1:94.0,e2:94.0},
+  {mes:'Abril',   n:'Plaza del Parque',          rq:11,icq:0,flt:4, c:63.6, e1:100, e2:100},
+  {mes:'Abril',   n:'Portal Shopping (Ecuador)', rq:13,icq:1,flt:1, c:84.6, e1:100, e2:100},
+  {mes:'Mayo',    n:'Victoria Plaza',            rq:9, icq:0,flt:3, c:66.7, e1:95.3,e2:95.0},
+  {mes:'Mayo',    n:'Metropolitan',              rq:8, icq:1,flt:7, c:0.0,  e1:30.0,e2:100},
+  {mes:'Mayo',    n:'Megamal',                   rq:1, icq:0,flt:0, c:100,  e1:100, e2:100},
+  {mes:'Mayo',    n:'La Florida Etapa 1 y 2',   rq:9, icq:1,flt:8, c:0.0,  e1:31.7,e2:49.0},
+  {mes:'Junio',   n:'Ideo Cali',                rq:5, icq:1,flt:1, c:60.0, e1:90.0,e2:100.0}
+];
+
+const BASE={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+  scales:{
+    x:{ticks:{font:{size:11,family:'Arial'},color:'#5A6480'},grid:{display:false}},
+    y:{ticks:{font:{size:11,family:'Arial'},color:'#5A6480'},grid:{color:'rgba(0,0,0,0.05)'},border:{display:false}}
+  }};
+const pctY={min:0,max:115,ticks:{callback:v=>v+'%',font:{size:11,family:'Arial'},color:'#5A6480'}};
+const cop=v=>'$'+v.toLocaleString('es-CO');
+
+new Chart(document.getElementById('c1'),{type:'bar',data:{labels:M,datasets:[{data:D.costos,backgroundColor:[B,B,R,G,B],borderRadius:5}]},options:{...BASE,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>cop(c.raw)}}}}});
+new Chart(document.getElementById('c2'),{type:'bar',data:{labels:M,datasets:[{data:D.neg,backgroundColor:G,borderRadius:5}]},options:BASE});
+new Chart(document.getElementById('c3'),{type:'line',data:{labels:M,datasets:[
+  {label:'Salidas',data:D.sal,borderColor:B,backgroundColor:'rgba(26,75,140,.07)',tension:.3,pointRadius:4,fill:true},
+  {label:'Recaudo',data:D.rec,borderColor:G,tension:.3,pointRadius:4,borderDash:[4,3]},
+  {label:'Cartera',data:D.cart,borderColor:A,tension:.3,pointRadius:4,borderDash:[2,4]},
+  {label:'Vigentes',data:D.pctV,borderColor:B2,tension:.3,pointRadius:4,borderDash:[6,2]}
+]},options:{...BASE,scales:{...BASE.scales,y:{...BASE.scales.y,min:65,max:105,ticks:{callback:v=>v+'%',font:{size:11,family:'Arial'},color:'#5A6480'}}}}});
+new Chart(document.getElementById('c4'),{type:'line',data:{labels:M,datasets:[{data:D.gap,borderColor:R,backgroundColor:'rgba(192,57,43,.07)',tension:.3,pointRadius:5,fill:true,borderWidth:2}]},options:{...BASE,scales:{...BASE.scales,y:{...BASE.scales.y,min:0,max:80}}}});
+new Chart(document.getElementById('c5'),{type:'bar',data:{labels:M,datasets:[{label:'Días pago',data:D.dpago,backgroundColor:B,borderRadius:4},{label:'Días cobro',data:D.dcobro,backgroundColor:G,borderRadius:4}]},options:{...BASE,plugins:{legend:{display:true,labels:{font:{size:11},boxWidth:10}}}}});
+new Chart(document.getElementById('c6'),{type:'bar',data:{labels:M,datasets:[{label:'Total (activos)',data:D.vig,backgroundColor:B,borderRadius:4},{label:'Vencidos',data:D.vig.map((v,i)=>v-D.vec[i]),backgroundColor:R,borderRadius:4}]},options:{...BASE,plugins:{legend:{display:true,labels:{font:{size:11},boxWidth:10}}}}});
+new Chart(document.getElementById('c7'),{type:'line',data:{labels:M,datasets:[{label:'Cert.',data:[100,100,100,100,100],borderColor:G,backgroundColor:'rgba(0,168,120,.08)',tension:.2,pointRadius:5,fill:true},{label:'Planes',data:[100,100,100,100,100],borderColor:B,tension:.2,pointRadius:5,borderDash:[5,3]}]},options:{...BASE,plugins:{legend:{display:true,labels:{font:{size:11},boxWidth:10}}},scales:{...BASE.scales,y:{...BASE.scales.y,...pctY}}}});
+new Chart(document.getElementById('c8'),{type:'bar',data:{labels:M,datasets:[{data:D.impN,backgroundColor:[B,B,A,B,B],borderRadius:5}]},options:BASE});
+new Chart(document.getElementById('c9'),{type:'bar',data:{labels:M,datasets:[{data:D.impI,backgroundColor:G,borderRadius:5}]},options:{...BASE,scales:{...BASE.scales,y:{...BASE.scales.y,min:0,max:5}}}});
+new Chart(document.getElementById('c10'),{type:'bar',data:{labels:M,datasets:[{label:'Total RQ',data:D.rqT,backgroundColor:B,borderRadius:4},{label:'Fuera LT',data:D.rqL,backgroundColor:R,borderRadius:4}]},options:{...BASE,plugins:{legend:{display:true,labels:{font:{size:11},boxWidth:10}}}}});
+new Chart(document.getElementById('c11'),{type:'line',data:{labels:M,datasets:[{label:'Ef.1',data:D.ef1,borderColor:G,backgroundColor:'rgba(0,168,120,.08)',tension:.3,pointRadius:5,fill:true},{label:'Ef.2',data:D.ef2,borderColor:B,tension:.3,pointRadius:5,borderDash:[4,3]}]},options:{...BASE,plugins:{legend:{display:true,labels:{font:{size:11},boxWidth:10}}},scales:{...BASE.scales,y:{...BASE.scales.y,...pctY}}}});
+new Chart(document.getElementById('c12'),{type:'bar',data:{labels:M,datasets:[{data:D.cumpl,backgroundColor:[B2,R,G,G,A],borderRadius:5}]},options:{...BASE,scales:{...BASE.scales,y:{...BASE.scales.y,min:0,max:100,ticks:{callback:v=>v+'%',font:{size:11,family:'Arial'},color:'#5A6480'}}}}});
+new Chart(document.getElementById('c13'),{type:'bar',indexAxis:'y',data:{labels:PROY.map(p=>p.n),datasets:[{label:'Ef.1 (%)',data:PROY.map(p=>p.e1),backgroundColor:G,borderRadius:3},{label:'Ef.2 (%)',data:PROY.map(p=>p.e2),backgroundColor:'rgba(26,75,140,.65)',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:11},boxWidth:10}}},scales:{x:{min:0,max:110,ticks:{callback:v=>v+'%',font:{size:10,family:'Arial'},color:'#5A6480'},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{font:{size:10,family:'Arial'},color:'#5A6480'},grid:{display:false}}}}});
+
+// Tabla proyectos
+const ptb=document.getElementById('ptbody');
+PROY.forEach((p,i)=>{
+  const est=p.e1>=80?'<span class="tag tag-ok">Bueno</span>':p.e1>=50?'<span class="tag tag-warn">Regular</span>':'<span class="tag tag-bad">Bajo</span>';
+  const e1c=p.e1>=80?'num-good':p.e1<50?'num-bad':'';
+  ptb.innerHTML+=`<tr class="crow" onclick="openM('proy_${i}')"><td>${p.mes}</td><td>${p.n}</td><td>${p.rq}</td><td>${p.icq>0?'<span class="num-bad">'+p.icq+'</span>':'<span class="num-good">'+p.icq+'</span>'}</td><td>${p.flt}</td><td>${p.c.toFixed(1)}%</td><td class="${e1c}">${p.e1.toFixed(1)}%</td><td>${p.e2.toFixed(1)}%</td><td>${est}</td></tr>`;
+});
+
+// MODAL helpers
+function bbar(v,max,col){const p=Math.min(100,v/max*100);return `<div class="btrack"><div class="bfill" style="width:${p}%;background:${col}"></div></div>`;}
+function kp(l,v,c=''){return `<div class="mk"><div class="mkl">${l}</div><div class="mkv ${c}">${v}</div></div>`;}
+function rw(l,v,vc=''){return `<div class="mr"><span class="mrl">${l}</span><span class="mrv ${vc}">${v}</span></div>`;}
+function sec(t,html){return `<div class="ms"><div class="mst">${t}</div>${html}</div>`;}
+
+// Modales por clave
+const MODS={
+  hero_negocios:{t:'Negocios cerrados — Ene–Jun 2026',b:()=>sec('Por mes',M.map((m,i)=>rw(m,D.neg[i]+' negocios')+bbar(D.neg[i],8,G)).join(''))+`<div class="mnote">Total acumulado: <b>25 negocios</b>. Pico en Mayo (8). Mínimo en Marzo (2).</div>`},
+  hero_clientes:{t:'Clientes con contrato vigente',b:()=>sec('Evolución mensual',M.map((m,i)=>rw(m,D.vig[i]+' vigentes / '+D.vec[i]+' vencidos')).join(''))+`<div class="mnote">Base estable en 79 clientes desde Febrero. Los vencidos crecen progresivamente de 56 a 65.</div>`},
+  hero_cartera:{t:'Calidad de cartera mensual',b:()=>sec('% Calidad de cartera',M.map((m,i)=>rw(m,D.cart[i].toFixed(1)+'%')+bbar(D.cart[i],100,G)).join(''))+`<div class="mnote">Promedio del período: <b>98.98%</b>. Mínimo en Abril (98.9%).</div>`},
+  hero_cert:{t:'Cumplimiento de certificaciones',b:()=>sec('Estado mensual',M.map(m=>rw(m,'100% ✅')).join(''))+`<div class="mnote">Cumplimiento perfecto (100%) en certificaciones y planes de mejoramiento en los 5 meses.</div>`},
+  hero_rq:{t:'RQ gestionados — Resumen global',b:()=>`<div class="mg">${kp('Total RQ','92','good')}${kp('Incumpl. calidad','6','bad')}${kp('Fuera lead time','48','warn')}${kp('% Fuera LT','52%','warn')}</div>`+sec('RQ por mes',M.map((m,i)=>rw(m,D.rqT[i]+' RQ · '+D.rqL[i]+' fuera LT · '+D.rqC[i]+' incumpl.')).join(''))},
+
+  ing_negocios:{t:'Negocios cerrados — Detalle',b:()=>sec('Por mes',M.map((m,i)=>rw(m,D.neg[i]+' negocios')+bbar(D.neg[i],8,G)).join(''))+`<div class="mnote">Total: <b>25</b>. Pico Mayo (8). Mínimo Marzo (2).</div>`},
+  ing_clientes:{t:'Clientes activos con contrato vigente',b:()=>sec('Evolución',M.map((m,i)=>rw(m,D.vig[i]+' clientes')).join(''))+`<div class="mnote">Enero inició con 80. Desde Febrero estable en 79.</div>`},
+  ing_cartera:{t:'Calidad de cartera mensual',b:()=>sec('% Calidad',M.map((m,i)=>rw(m,D.cart[i].toFixed(1)+'%')+bbar(D.cart[i],100,G)).join(''))+`<div class="mnote">Promedio: <b>98.98%</b>. Efectividad de recaudo promedio: <b>97.6%</b>.</div>`},
+  ing_vencidos:{t:'Contratos vencidos — Tendencia',b:()=>sec('Vencidos por mes',M.map((m,i)=>{const venc=D.vig[i]-D.vec[i];return rw(m,venc+' vencidos ('+Math.round(venc/D.vig[i]*100)+'%)')+bbar(venc,30,R);}).join(''))+`<div class="mnote">Proporción baja de 30% en Enero a 18% en Mayo. Tendencia favorable.</div>`},
+  ing_costos:{t:'Costo financiero de demoras',b:()=>{
+    const tot=D.costos.reduce((a,b)=>a+b,0);
+    return sec('Costo mensual',M.map((m,i)=>{const v=D.costos[i];const col=v>10000000?R:v>0?A:G;return rw(m,cop(v))+bbar(v,53881074,col);}).join(''))+
+    `<div class="mg" style="margin-top:12px">${kp('Total período',cop(tot),'bad')}${kp('Pico (Marzo)','$53.9M','bad')}${kp('Mejor (Abril)','$0','good')}${kp('Promedio',cop(Math.round(tot/5)))}</div>`+
+    `<div class="mnote">Marzo representa el <b>75.2%</b> del costo total del período. Abril fue el único mes sin costo por demoras.</div>`;
+  }},
+  ing_gap:{t:'GAP efectivo (días)',b:()=>sec('GAP por mes',M.map((m,i)=>{const v=D.gap[i];const col=v>60?R:v>45?A:G;return rw(m,v.toFixed(1)+' días'+(v>60?' ⚠️':v<=30?' ✅':''))+bbar(v,80,col);}).join(''))+`<div class="mnote">GAP = días cobro – días pago. Por encima de 60 días hay riesgo de liquidez. Abril (27 días) fue el mejor mes.</div>`},
+  ing_dias:{t:'Días promedio pago vs. cobro',b:()=>sec('Por mes',M.map((m,i)=>`${rw(m+' · Pago',D.dpago[i].toFixed(0)+' días')}${rw(m+' · Cobro',D.dcobro[i]+' días')}<div style="height:6px"></div>`).join(''))+`<div class="mnote">Días pago prom: <b>${Math.round(D.dpago.reduce((a,b)=>a+b,0)/5)}</b> · Días cobro prom: <b>${Math.round(D.dcobro.reduce((a,b)=>a+b,0)/5)}</b>. Abril tuvo el mayor cobro (85 días).</div>`},
+  ing_cumpl:{t:'Indicadores de cumplimiento mensual',b:()=>
+    sec('Salidas facturables',M.map((m,i)=>rw(m,D.sal[i].toFixed(1)+'%')+bbar(D.sal[i],100,B)).join(''))+
+    sec('Efectividad recaudo',M.map((m,i)=>rw(m,D.rec[i]+'%')+bbar(D.rec[i],100,G)).join(''))+
+    sec('% Cumpl. contratos vigentes',M.map((m,i)=>rw(m,D.pctV[i]+'%')+bbar(D.pctV[i],100,B2)).join(''))},
+  ing_contratos:{t:'Total de contratos vs. vencidos',b:()=>sec('Detalle mensual',M.map((m,i)=>{const venc=D.vig[i]-D.vec[i];return rw(m,D.vig[i]+' total · '+venc+' vencidos ('+Math.round(venc/D.vig[i]*100)+'%)');}).join(''))+`<div class="mnote">Vencidos = Total de contratos activos − dato de la fila base. La proporción de vencidos baja de 30% (Enero) a 18% (Mayo).</div>`},
+
+  cal_cert:{t:'Cumplimiento certificaciones — Detalle',b:()=>sec('Mes a mes',M.map(m=>rw(m,'100% ✅')).join(''))+`<div class="mnote">Cumplimiento constante en 100% durante todo el período. Meta: 100%.</div>`},
+  cal_planes:{t:'Cumplimiento planes de mejoramiento',b:()=>sec('Mes a mes',M.map(m=>rw(m,'100% ✅')).join(''))+`<div class="mnote">Todos los planes ejecutados al 100% sin excepción en enero–mayo.</div>`},
+
+  fis_cumpl:{t:'Cumplimiento calendario tributario',b:()=>sec('Mes a mes',M.map(m=>rw(m,'100% ✅')).join(''))+`<div class="mnote">Ningún vencimiento tributario fue incumplido en el período.</div>`},
+  fis_nac:{t:'Impuestos nacionales — Detalle',b:()=>{
+    return sec('Volumen por mes',M.map((m,i)=>rw(m,D.impN[i]+' impuestos')+bbar(D.impN[i],21,i===2?A:B)).join(''))+
+    `<div class="mg" style="margin-top:12px">${kp('Total acum.','78','good')}${kp('Pico (Marzo)','21','warn')}${kp('Promedio mensual','13')}${kp('Cumplimiento','100%','good')}</div>`+
+    `<div class="mnote">Marzo concentra el 27% del volumen acumulado Ene–Jun.</div>`;
+  }},
+  fis_int:{t:'Impuestos internacionales — Detalle',b:()=>sec('Mes a mes',M.map(m=>rw(m,'2 impuestos ✅')).join(''))+`<div class="mnote">Volumen perfectamente estable. 2 obligaciones internacionales por mes.</div>`},
+
+  ab_rq:{t:'Total RQ gestionados',b:()=>sec('Por mes',M.map((m,i)=>rw(m,D.rqT[i]+' RQ')+bbar(D.rqT[i],27,B)).join(''))+`<div class="mnote">Total acumulado: <b>92 RQ</b>. Mayo el más activo (27). Junio el más bajo (5).</div>`},
+  ab_calidad:{t:'RQ con incumplimiento de calidad',b:()=>{
+    return sec('Incumplimientos por mes',M.map((m,i)=>{
+      const pct2=D.rqT[i]>0?(D.rqC[i]/D.rqT[i]*100).toFixed(1):'0.0';
+      return rw(m,D.rqC[i]+' de '+D.rqT[i]+' RQ ('+pct2+'%)')+bbar(D.rqC[i],5,R);
+    }).join(''))+
+    `<div class="mg" style="margin-top:12px">${kp('Total incumpl.','5','bad')}${kp('% del total','5.7%','bad')}${kp('Meses sin incumpl.','3','good')}${kp('Peor mes','Feb / May (2)','bad')}</div>`+
+    `<div class="mnote">Enero, Marzo y Abril sin incumplimientos. Febrero y Mayo tuvieron 2 cada uno. El índice global de 5.7% es aceptable.</div>`;
+  }},
+  ab_lead:{t:'RQ fuera de lead time del proveedor',b:()=>{
+    return sec('Fuera de LT por mes',M.map((m,i)=>{
+      const p2=Math.round(D.rqL[i]/D.rqT[i]*100);
+      const col=p2>70?R:p2>50?A:G;
+      return rw(m,D.rqL[i]+'/'+D.rqT[i]+' RQ ('+p2+'%)')+bbar(D.rqL[i],D.rqT[i],col);
+    }).join(''))+
+    `<div class="mg" style="margin-top:12px">${kp('Total fuera LT','47','bad')}${kp('% global','54%','bad')}${kp('Peor mes','Feb (84%)','bad')}${kp('Mejor mes','Mar (38%)','warn')}</div>`+
+    `<div class="mnote">Febrero tiene 16/19 RQ fuera de tiempo (84%). Indicador más crítico del área — requiere revisión del proceso de planificación de compras.</div>`;
+  }},
+  ab_ef:{t:'Efectividad 1 y 2 mensual',b:()=>{
+    return sec('Efectividad mensual (fuente: Excel)',M.map((m,i)=>`
+      ${rw(m+' · Ef.1',D.ef1[i]+'%',D.ef1[i]>=80?'good':D.ef1[i]<50?'bad':'')}${bbar(D.ef1[i],100,G)}
+      ${rw(m+' · Ef.2',D.ef2[i]+'%',D.ef2[i]>=80?'good':D.ef2[i]<50?'bad':'')}${bbar(D.ef2[i],100,B)}
+      <div style="height:6px"></div>`).join(''))+
+    `<div class="mg" style="margin-top:12px">${kp('Promedio Ef.1','66.3%','warn')}${kp('Promedio Ef.2','79.7%','warn')}</div>`+
+    `<div class="mnote">Promedios calculados como promedio simple de 5 meses. Abril: mejor mes (100% en ambas). Febrero: peor mes (Ef.1: 36%, Ef.2: 49%).</div>`;
+  }},
+  ab_cumpl:{t:'% Cumplimiento lead time / calidad por mes',b:()=>{
+    return sec('Cumplimiento mensual',M.map((m,i)=>{
+      const col=D.cumpl[i]>=60?G:D.cumpl[i]>=30?A:R;
+      return rw(m,D.cumpl[i].toFixed(1)+'%')+bbar(D.cumpl[i],100,col);
+    }).join(''))+
+    `<div class="mg" style="margin-top:12px">${kp('Promedio','40.2%','bad')}${kp('Máximo','Abr 75%','warn')}${kp('Mínimo','Feb 5.3%','bad')}${kp('Meta sugerida','≥70%')}</div>`;
+  }},
+  ab_proy_chart:{t:'Efectividad por proyecto — Ranking',b:()=>{
+    const sorted=[...PROY].sort((a,b)=>b.e1-a.e1);
+    return sec('Ranking por Efectividad 1',sorted.map(p=>`${rw(p.n,p.e1.toFixed(1)+'%',p.e1>=80?'good':p.e1<50?'bad':'')}${bbar(p.e1,100,p.e1>=80?G:p.e1>=50?A:R)}`).join(''));
+  }},
+};
+
+// Modales calidad por mes
+['Enero','Febrero','Marzo','Abril','Mayo','Junio'].forEach((m,i)=>{
+  MODS[`cal_mes_${i}`]={t:`Calidad · ${m} 2026`,b:()=>`<div class="mg">${kp('Certificaciones','100%','good')}${kp('Planes de mejora','100%','good')}</div><div class="mnote">Sin incidencias. Cumplimiento total en ambos indicadores.</div>`};
+});
+
+// Modales fiscal por mes
+const fisM=[{n:0,nac:8,int:2,total:10},{n:1,nac:9,int:2,total:11},{n:2,nac:21,int:2,total:23},{n:3,nac:16,int:2,total:18},{n:4,nac:11,int:2,total:13},{n:5,nac:13,int:2,total:15}];
+fisM.forEach(f=>{
+  MODS[`fis_mes_${f.n}`]={t:`Info. Financiera · ${M[f.n]} 2026`,b:()=>
+    `<div class="mg">${kp('Nacionales',f.nac,f.n===2?'warn':'good')}${kp('Internacionales',f.int,'good')}${kp('Total',f.total,f.n===2?'warn':'good')}${kp('Cumplimiento','100%','good')}</div>`+
+    (f.n===2?`<div class="mnote">Mes de mayor carga tributaria. Los 21 impuestos nacionales representan el 27% del total acumulado. Todos cumplidos.</div>`:'')};
+});
+
+// Modales proyectos
+PROY.forEach((p,i)=>{
+  MODS[`proy_${i}`]={t:`${p.n} · ${p.mes} 2026`,b:()=>{
+    const cc=p.c>=60?'good':p.c>=30?'warn':'bad';
+    const e1c=p.e1>=80?'good':p.e1<50?'bad':'warn';
+    const e2c=p.e2>=80?'good':p.e2<50?'bad':'warn';
+    return `<div class="mg">${kp('RQ total',p.rq)}${kp('Incumpl. calidad',p.icq,p.icq>0?'bad':'good')}${kp('Fuera lead time',p.flt,p.flt/p.rq>0.6?'bad':p.flt/p.rq>0.3?'warn':'good')}${kp('% Cumpl.',p.c.toFixed(1)+'%',cc)}</div>`+
+    sec('Efectividad',
+      rw('Efectividad 1',p.e1.toFixed(1)+'%',e1c)+bbar(p.e1,100,p.e1>=80?G:p.e1>=50?A:R)+
+      rw('Efectividad 2',p.e2.toFixed(1)+'%',e2c)+bbar(p.e2,100,p.e2>=80?G:p.e2>=50?A:R))+
+    `<div class="mnote">${p.e1>=80?'✅ Proyecto de alto desempeño.':p.e1>=50?'⚠️ Desempeño regular. Revisar gestión de lead time.':'🔴 Desempeño bajo. Requiere análisis de causas y plan de acción.'} ${p.icq>0?' Registró '+p.icq+' RQ con incumplimiento de especificaciones.':' Sin incumplimientos de calidad.'}</div>`;
+  }};
+});
+
+function showTab(id,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+function openM(key){
+  const cfg=MODS[key];if(!cfg)return;
+  document.getElementById('mtitle').textContent=cfg.t;
+  document.getElementById('mbody').innerHTML=cfg.b();
+  document.getElementById('moverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeM(){
+  document.getElementById('moverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function closeMOut(e){if(e.target===document.getElementById('moverlay'))closeM();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM();});
+</script>
+</body>
+</html>
